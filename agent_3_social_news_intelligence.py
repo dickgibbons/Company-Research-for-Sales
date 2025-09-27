@@ -119,27 +119,39 @@ class SocialNewsIntelligence:
                 logger.warning("⚠️ Perplexity API key not found - using mock data")
                 return self._generate_mock_interview_data(company_name, ticker)
 
-            # Construct search query for Perplexity
+            # Construct enhanced search query for Perplexity
             query = f"""
-            Find recent executive interviews, articles, and news coverage about {company_name} ({ticker}) from the past 12 months (since {self.date_cutoff_str}).
+            Find at least 8-10 recent executive interviews, articles, and news coverage about {company_name} ({ticker}) from the past 18 months (since {self.date_cutoff_str}).
 
-            Search for:
-            1. CEO or executive interviews discussing strategy
-            2. Company announcements about digital transformation
-            3. Articles about their technology initiatives
-            4. Executive statements about future investments
-            5. Industry analysis or coverage of their strategic direction
+            PRIORITY SEARCH TARGETS:
+            1. Executive interviews (CEO, CTO, CFO, President) with direct quotes
+            2. Earnings call transcripts and executive commentary
+            3. Company strategy announcements and press releases
+            4. Executive presentations at conferences or investor events
+            5. Industry analyst reports featuring executive statements
+            6. Exclusive executive profiles or feature articles
+            7. Executive commentary on digital transformation, AI, cloud, technology
+            8. M&A announcements or strategic partnership discussions
+            9. Executive leadership changes or succession announcements
+            10. Company vision statements and future roadmap discussions
 
-            For each source found, provide:
-            - Publication date
-            - Source/publication name
-            - Executive name (if interview)
-            - Title/headline
-            - Key strategic insights (max 200 words)
-            - Link to the article
-            - Relevance to consulting opportunities
+            For EACH article/interview found, provide in this exact format:
+            ---
+            Date: [YYYY-MM-DD]
+            Publication: [Source name]
+            Executive: [Name and title if applicable]
+            Title: [Full headline/title]
+            URL: [Direct working link to the article]
+            Key Insights: [Strategic points, quotes, future plans - 150-200 words]
+            EPAM Relevance: [How this relates to consulting opportunities]
+            ---
 
-            Provide results as a structured list with citations and links.
+            IMPORTANT:
+            - Include only articles with accessible, working URLs
+            - Focus on executive quotes and strategic statements
+            - Prioritize major business publications and news sources
+            - Ensure all links are complete and functional
+            - Provide at least 8 different sources if available
             """
 
             headers = {
@@ -152,7 +164,7 @@ class SocialNewsIntelligence:
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are a business intelligence researcher. Find and cite recent executive interviews and strategic articles with accurate links and dates."
+                        "content": "You are a business intelligence researcher specializing in executive interviews and corporate communications. Your mission is to find comprehensive, recent articles with working URLs. Always include complete, functional links to articles. Focus on executive quotes, strategic announcements, and company vision statements. Prioritize articles with direct access links and avoid paywalled content when possible."
                     },
                     {
                         "role": "user",
@@ -160,9 +172,9 @@ class SocialNewsIntelligence:
                     }
                 ],
                 "temperature": 0.1,
-                "max_tokens": 4000,
+                "max_tokens": 8000,
                 "return_citations": True,
-                "search_domain_filter": ["wsj.com", "reuters.com", "bloomberg.com", "ft.com", "cnbc.com", "techcrunch.com", "forbes.com", "businessinsider.com"]
+                "search_domain_filter": ["wsj.com", "reuters.com", "bloomberg.com", "ft.com", "cnbc.com", "techcrunch.com", "forbes.com", "businessinsider.com", "marketwatch.com", "investor.com", "sec.gov", "yahoo.com", "fool.com", "seekingalpha.com", "benzinga.com", "theinformation.com", "axios.com", "thestreet.com"]
             }
 
             response = requests.post(self.perplexity_url, headers=headers, json=payload)
