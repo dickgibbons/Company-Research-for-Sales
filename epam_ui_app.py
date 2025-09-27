@@ -87,9 +87,15 @@ def analyze_company():
 @app.route('/download/<path:temp_file>')
 def download_report(temp_file):
     """Generate and download Word document report"""
-    # Handle double slash issue
+    # Handle path issues - decode URL encoding and remove leading slash
+    import urllib.parse
+    temp_file = urllib.parse.unquote(temp_file)
     if temp_file.startswith('/'):
         temp_file = temp_file[1:]
+
+    # Ensure absolute path
+    if not temp_file.startswith('/'):
+        temp_file = '/' + temp_file
     try:
         # Load the analysis result
         with open(temp_file, 'r') as f:
