@@ -79,10 +79,10 @@ def analyze_company():
 
 @app.route('/download/<path:temp_file>')
 def download_report(temp_file):
+    """Generate and download Word document report"""
     # Handle double slash issue
     if temp_file.startswith('/'):
         temp_file = temp_file[1:]
-    """Generate and download Word document report"""
     try:
         # Load the analysis result
         with open(temp_file, 'r') as f:
