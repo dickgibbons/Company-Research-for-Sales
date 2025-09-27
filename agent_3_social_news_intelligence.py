@@ -135,23 +135,20 @@ class SocialNewsIntelligence:
             9. Executive leadership changes or succession announcements
             10. Company vision statements and future roadmap discussions
 
-            For EACH article/interview found, provide in this exact format:
-            ---
-            Date: [YYYY-MM-DD]
-            Publication: [Source name]
-            Executive: [Name and title if applicable]
-            Title: [Full headline/title]
-            URL: [Direct working link to the article]
-            Key Insights: [Strategic points, quotes, future plans - 150-200 words]
-            EPAM Relevance: [How this relates to consulting opportunities]
-            ---
+            RESPONSE FORMAT: Provide a simple table with ALL articles found (aim for 10-15), one per line:
 
-            IMPORTANT:
-            - Include only articles with accessible, working URLs
-            - Focus on executive quotes and strategic statements
-            - Prioritize major business publications and news sources
-            - Ensure all links are complete and functional
-            - Provide at least 8 different sources if available
+            Date|Publication|Executive|Title|URL|Key Insight (1-2 sentences)|EPAM Relevance
+
+            Example:
+            2024-09-15|Bloomberg|CEO John Smith|Company Announces AI Strategy|https://bloomberg.com/article123|CEO discussed $50M AI investment for 2025|High - AI transformation consulting
+            2024-08-20|WSJ|CFO Jane Doe|Q2 Earnings Call|https://wsj.com/article456|CFO highlighted cloud migration priorities|Medium - Cloud consulting services
+
+            REQUIREMENTS:
+            - Include ALL articles found from the last 12 months
+            - Every row must have a working URL
+            - Focus on executive statements and company strategy
+            - Include earnings calls, interviews, press releases, conference talks
+            - Prioritize articles with direct access (non-paywalled when possible)
             """
 
             headers = {
@@ -197,40 +194,85 @@ class SocialNewsIntelligence:
             return self._generate_mock_interview_data(company_name, ticker)
 
     def _process_perplexity_response(self, content: str, citations: List[str]) -> List[Dict]:
-        """Process Perplexity API response and extract structured data"""
+        """Process Perplexity API response and extract structured table data"""
         try:
-            # Extract structured information from the response
             interview_data = []
 
-            # Split content into sections
-            sections = content.split('\n\n')
+            # Split content into lines and look for table format
+            lines = content.split('\n')
 
-            for i, section in enumerate(sections):
-                if len(section.strip()) < 50:  # Skip short sections
+            for line in lines:
+                line = line.strip()
+                if not line or line.startswith('Date|') or line.startswith('Example:'):
                     continue
 
-                # Extract key information
-                interview_item = {
-                    'date': self._extract_date_from_text(section),
-                    'source': self._extract_source_from_text(section),
-                    'executive': self._extract_executive_from_text(section),
-                    'title': self._extract_title_from_text(section),
-                    'key_insights': section[:300] + '...' if len(section) > 300 else section,
-                    'link': citations[i] if i < len(citations) else 'https://example.com',
-                    'consulting_relevance': self._assess_consulting_relevance(section)
-                }
+                # Look for pipe-separated data: Date|Publication|Executive|Title|URL|Key Insight|EPAM Relevance
+                if '|' in line and line.count('|') >= 5:
+                    parts = [part.strip() for part in line.split('|')]
+                    if len(parts) >= 6:
+                        # Extract URL - look for http/https links
+                        url = parts[4] if parts[4].startswith('http') else self._extract_url_from_citations(citations, parts[3])
 
-                interview_data.append(interview_item)
+                        interview_item = {
+                            'date': parts[0] if parts[0] and len(parts[0]) >= 8 else '2024-01-01',
+                            'source': parts[1] or 'Unknown Source',
+                            'executive': parts[2] or 'Company Executive',
+                            'title': parts[3] or 'Executive Interview',
+                            'key_insights': parts[5] if len(parts) > 5 else 'Strategic discussion',
+                            'link': url,
+                            'consulting_relevance': parts[6] if len(parts) > 6 else 'Medium relevance'
+                        }
 
-                # Limit to top 5 results
-                if len(interview_data) >= 5:
-                    break
+                        interview_data.append(interview_item)
 
-            return interview_data
+            # If no table format found, fall back to original parsing but with more results
+            if not interview_data:
+                interview_data = self._fallback_parsing(content, citations)
+
+            # Include more results - up to 15
+            return interview_data[:15]
 
         except Exception as e:
-            logger.error(f"Error processing Perplexity response: {e}")
-            return []
+            logger.warning(f"Error parsing Perplexity response: {e}")
+            return self._fallback_parsing(content, citations)
+
+    def _extract_url_from_citations(self, citations: List[str], title: str) -> str:
+        """Try to find a matching URL from citations"""
+        if not citations:
+            return 'https://example.com'
+
+        # Return first citation as fallback, or try to match by title
+        for citation in citations:
+            if citation.startswith('http'):
+                return citation
+
+        return citations[0] if citations else 'https://example.com'
+
+    def _fallback_parsing(self, content: str, citations: List[str]) -> List[Dict]:
+        """Fallback parsing when table format is not found"""
+        interview_data = []
+        sections = content.split('\n\n')
+
+        for i, section in enumerate(sections):
+            if len(section.strip()) < 50:
+                continue
+
+            interview_item = {
+                'date': self._extract_date_from_text(section),
+                'source': self._extract_source_from_text(section),
+                'executive': self._extract_executive_from_text(section),
+                'title': self._extract_title_from_text(section),
+                'key_insights': section[:200] + '...' if len(section) > 200 else section,
+                'link': citations[i] if i < len(citations) and citations[i].startswith('http') else 'https://example.com',
+                'consulting_relevance': self._assess_consulting_relevance(section)
+            }
+
+            interview_data.append(interview_item)
+
+            if len(interview_data) >= 10:
+                break
+
+        return interview_data
 
     def _extract_date_from_text(self, text: str) -> str:
         """Extract date from text"""
