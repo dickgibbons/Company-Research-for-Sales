@@ -12,6 +12,13 @@ from datetime import datetime
 from typing import Dict
 import importlib.util
 
+# Import configuration
+try:
+    from config import GROK_API_KEY, PERPLEXITY_API_KEY
+except ImportError:
+    GROK_API_KEY = None
+    PERPLEXITY_API_KEY = None
+
 # Flask imports
 from flask import Flask, render_template, request, jsonify, send_file, flash, redirect, url_for
 import io
@@ -52,8 +59,8 @@ def analyze_company():
             return redirect(url_for('index'))
 
         # Get optional API keys
-        grok_key = request.form.get('grok_key', '').strip() or None
-        perplexity_key = request.form.get('perplexity_key', '').strip() or None
+        grok_key = request.form.get('grok_key', '').strip() or GROK_API_KEY
+        perplexity_key = request.form.get('perplexity_key', '').strip() or PERPLEXITY_API_KEY
 
         # Initialize and run analysis
         master_chain = MasterEPAMIntelligenceChain(grok_key, perplexity_key)
@@ -220,8 +227,8 @@ def api_analyze():
         if not ticker:
             return jsonify({'error': 'Ticker symbol required'}), 400
 
-        grok_key = data.get('grok_key')
-        perplexity_key = data.get('perplexity_key')
+        grok_key = data.get('grok_key') or GROK_API_KEY
+        perplexity_key = data.get('perplexity_key') or PERPLEXITY_API_KEY
 
         # Run analysis
         master_chain = MasterEPAMIntelligenceChain(grok_key, perplexity_key)
