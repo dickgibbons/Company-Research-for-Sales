@@ -75,7 +75,7 @@
                         <div class="row text-center">
                             <div class="col-md-3">
                                 <div class="intelligence-stat">
-                                    <h3 class="text-primary">{{ result.agent_1_result.filings|length }}</h3>
+                                    <h3 class="text-dark fw-bold">{{ result.agent_1_result.filings|length }}</h3>
                                     <p class="mb-0">SEC Filings</p>
                                 </div>
                             </div>
@@ -87,7 +87,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="intelligence-stat">
-                                    <h3 class="text-info">{{ result.agent_3_result.twitter_intelligence|length }}</h3>
+                                    <h3 class="text-dark fw-bold">{{ result.agent_3_result.twitter_intelligence|length }}</h3>
                                     <p class="mb-0">Social Mentions</p>
                                 </div>
                             </div>
@@ -156,7 +156,7 @@
                                 <small class="text-muted">{{ mention.date }}</small>
                             </div>
                             <p class="mb-2">{{ mention.summary }}</p>
-                            <small class="text-primary">{{ mention.strategic_relevance }}</small>
+                            <small class="text-dark fw-bold">{{ mention.strategic_relevance }}</small>
                         </div>
                         {% endfor %}
                     </div>
